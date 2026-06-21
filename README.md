@@ -2,7 +2,7 @@
 
 An interactive, browser-based design calculator for decentralized, solar-powered greywater treatment systems in residential UAE households. Built as a single self-contained web app — no installation, no backend, no build step.
 
-🔗 **Live demo:** _add your GitHub Pages link here once enabled_
+🔗 **Live demo:**[ _add your GitHub Pages link here once enabled_](https://mhret-e.github.io/greywater-design-calculator/)
 
 ---
 
