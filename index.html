@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Greywater Treatment System — Interactive Design Calculator (UAE)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --primary: #1565c0;
+    --primary-dark: #0d47a1;
+    --secondary: #2e7d32;
+    --secondary-light: #66bb6a;
+    --bg: #f4f7fa;
+    --card-bg: #ffffff;
+    --border: #d0dbe6;
+    --text: #1a2733;
+    --muted: #5d7285;
+    --warn-bg: #fff8e1;
+    --warn-border: #ffca28;
+    --danger: #c62828;
+    --danger-bg: #fdecea;
+    --ok: #2e7d32;
+    --ok-bg: #e8f5e9;
+    --yellow: #f9a825;
+    --yellow-bg: #fff8e1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0 0 40px 0;
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--secondary));
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0 0 8px 0;
+    font-size: 1.6rem;
+  }
+  header p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.92;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 16px 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 8px 0;
+    z-index: 10;
+  }
+  .tab-btn {
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadein 0.2s; }
+  @keyframes fadein { from {opacity:0;} to {opacity:1;} }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 1.15rem;
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .card h3 {
+    color: var(--primary-dark);
+    font-size: 1rem;
+    margin-top: 18px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .field input[type=number], .field input[type=text], .field select {
+    padding: 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  .field input[type=range] { width: 100%; }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .unit { font-weight: 400; color: var(--muted); font-size: 0.78rem; }
+  .info {
+    cursor: help;
+    color: var(--primary);
+    font-size: 0.75rem;
+    border: 1px solid var(--primary);
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .info-text {
+    display: none;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-top: 4px;
+  }
+  .info-text.show { display: block; }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .summary-card {
+    background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .summary-card .label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .summary-card .value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+  .summary-card .sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  .big-number {
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-radius: 12px;
+    padding: 22px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 16px 0;
+  }
+  .big-number .small { font-size: 0.85rem; font-weight: 400; opacity: 0.9; display: block; margin-top: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: var(--bg); color: var(--primary-dark); }
+  td input[type=number] { width: 90px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; text-align: right; }
+
+  .warning {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8a6d00;
+    margin: 10px 0;
+  }
+  .status-banner {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 16px;
+    border-radius: 10px;
+    margin: 16px 0;
+    transition: all 0.2s;
+  }
+  .status-green { background: var(--ok-bg); color: var(--ok); border: 2px solid var(--ok); }
+  .status-yellow { background: var(--yellow-bg); color: #8a6d00; border: 2px solid var(--yellow); }
+  .status-red { background: var(--danger-bg); color: var(--danger); border: 2px solid var(--danger); }
+
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 80px 80px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .param-row:last-child { border-bottom: none; }
+  .param-row .pname { font-weight: 600; }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+  }
+  .badge-pass { background: var(--ok-bg); color: var(--ok); }
+  .badge-fail { background: var(--danger-bg); color: var(--danger); }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  button.action {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  button.action.secondary { background: var(--secondary); }
+  button.action:hover { opacity: 0.9; }
+
+  .chart-wrap { position: relative; height: 280px; margin-top: 12px; }
+  .chart-wrap.small { height: 220px; }
+
+  .flow-diagram { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 20px 0; }
+  .flow-box {
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--primary-dark);
+    min-width: 100px;
+  }
+  .flow-box.highlight { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  .flow-arrow { font-size: 1.3rem; color: var(--muted); }
+  .recirc-note {
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+    font-weight: 700;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .disclaimer {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 24px;
+  }
+  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Greywater Treatment System — Interactive Design Calculator (UAE)</h1>
+  <p>Solar-Powered Greywater Treatment System with Automated Quality Monitoring for Non-Potable Reuse in the UAE</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="m1">1. Flow & Sizing</button>
+    <button class="tab-btn" data-tab="m2">2. Energy Demand</button>
+    <button class="tab-btn" data-tab="m3">3. Solar PV & Battery</button>
+    <button class="tab-btn" data-tab="m4">4. Cost & Payback</button>
+    <button class="tab-btn" data-tab="m5">5. Water Quality & Control</button>
+    <button class="tab-btn" data-tab="m6">6. Process Flow</button>
+  </div>
+
+  <div class="btn-row">
+    <button class="action" id="resetBtn">↺ Reset to defaults</button>
+    <button class="action secondary" id="printBtn">🖨 Print summary</button>
+    <button class="action secondary" id="csvBtn">⬇ Export results as CSV</button>
+  </div>
+
+  <!-- MODULE 1 -->
+  <div class="panel active" id="m1">
+    <div class="card">
+      <h2>Module 1 — Flow & Sizing Calculator</h2>
+      <div class="grid">
+        <div class="field">
+          <label>Number of occupants</label>
+          <input type="number" id="occupants" value="5" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>Greywater generation rate <span class="unit">(L/capita/day)</span></label>
+          <input type="number" id="genRate" value="192" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Toilet flushes per person per day</label>
+          <input type="number" id="flushesPerDay" value="5" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Liters per flush <span class="unit">(L)</span></label>
+          <input type="number" id="literPerFlush" value="5" min="0" step="0.1">
+        </div>
+      </div>
+
+      <h3>Greywater Stream Split</h3>
+      <div class="grid">
+        <div class="field">
+          <label><input type="checkbox" id="chkShower" checked> Shower <span class="unit">(%)</span></label>
+          <input type="number" id="pctShower" value="49" min="0" max="100" step="0.1">
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="chkAblution"> Ablution <span class="unit">(%)</span></label>
+          <input type="number" id="pctAblution" value="18" min="0" max="100" step="0.1">
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="chkLaundry"> Laundry <span class="unit">(%)</span></label>
+          <input type="number" id="pctLaundry" value="10" min="0" max="100" step="0.1">
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="chkWashbasin" checked> Washbasin <span class="unit">(%)</span></label>
+          <input type="number" id="pctWashbasin" value="23" min="0" max="100" step="0.1">
+        </div>
+      </div>
+      <div id="splitWarning" class="warning" style="display:none;"></div>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Total household greywater</div>
+          <div class="value" id="out_totalGW">—</div>
+          <div class="sub">L/day</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Design influent flow (Q_in) <span class="info" title="Q_in = Total greywater × sum of % for checked streams">ℹ️</span></div>
+          <div class="value" id="out_Qin">—</div>
+          <div class="sub">L/day</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Toilet flushing demand <span class="info" title="Demand = occupants × flushes/day × L/flush">ℹ️</span></div>
+          <div class="value" id="out_toiletDemand">—</div>
+          <div class="sub">L/day</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Surplus <span class="info" title="Surplus = Q_in − Toilet demand; Surplus % = Surplus / demand × 100">ℹ️</span></div>
+          <div class="value" id="out_surplus">—</div>
+          <div class="sub" id="out_surplusPct">—</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap"><canvas id="chartM1"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MODULE 2 -->
+  <div class="panel" id="m2">
+    <div class="card">
+      <h2>Module 2 — Daily Energy Demand Calculator</h2>
+      <div class="grid">
+        <div class="field">
+          <label>Controller + sensors avg power <span class="unit">(W, runs 24 h/day)</span></label>
+          <input type="number" id="ctrlPower" value="2.5" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Recirculation pump head <span class="unit">(m)</span></label>
+          <input type="number" id="recircHead" value="1.5" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Recirculation pump efficiency <span class="unit">(%)</span></label>
+          <input type="number" id="recircEff" value="35" min="1" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Delivery pump head <span class="unit">(m)</span></label>
+          <input type="number" id="deliveryHead" value="3" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Delivery pump efficiency <span class="unit">(%)</span></label>
+          <input type="number" id="deliveryEff" value="35" min="1" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Chlorine dosing pump power <span class="unit">(W)</span></label>
+          <input type="number" id="dosingPower" value="4" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Chlorine dosing pump runtime <span class="unit">(h/day)</span></label>
+          <input type="number" id="dosingRuntime" value="0.3" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Number of solenoid valves</label>
+          <input type="number" id="valveCount" value="2" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Power per valve <span class="unit">(W)</span></label>
+          <input type="number" id="valvePower" value="5" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Runtime per valve <span class="unit">(h/day)</span></label>
+          <input type="number" id="valveRuntime" value="0.3" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Design margin <span class="unit">(%)</span></label>
+          <input type="number" id="designMargin" value="25" min="0" step="1">
+        </div>
+      </div>
+
+      <h3>Energy Breakdown <span class="info" title="Hydraulic energy (kWh) = ρgQH / 3,600,000 where Q is m³/day and H is head (m). Electrical energy = hydraulic energy / efficiency.">ℹ️</span></h3>
+      <table>
+        <thead><tr><th>Component</th><th>Daily Energy (Wh)</th><th>% of Total</th></tr></thead>
+        <tbody id="energyTableBody"></tbody>
+      </table>
+
+      <div class="chart-wrap small"><canvas id="chartM2"></canvas></div>
+
+      <div class="big-number">
+        Design Daily Energy Demand: <span id="out_designEnergy">—</span> kWh/day
+        <span class="small">Subtotal × (1 + design margin)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 3 -->
+  <div class="panel" id="m3">
+    <div class="card">
+      <h2>Module 3 — Solar PV & Battery Sizing</h2>
+      <div class="grid">
+        <div class="field">
+          <label>Daily energy demand <span class="unit">(kWh/day, auto from Module 2, editable)</span></label>
+          <input type="number" id="dailyEnergyOverride" step="0.01">
+        </div>
+        <div class="field">
+          <label>Sizing basis</label>
+          <select id="sizingBasis">
+            <option value="winter" selected>Winter (worst case)</option>
+            <option value="summer">Summer</option>
+            <option value="annual">Annual average</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Peak sun hours — Winter <span class="unit">(kWh/kWp/day)</span></label>
+          <input type="number" id="psh_winter" value="4.78" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Peak sun hours — Summer <span class="unit">(kWh/kWp/day)</span></label>
+          <input type="number" id="psh_summer" value="7.42" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Peak sun hours — Annual average <span class="unit">(kWh/kWp/day)</span></label>
+          <input type="number" id="psh_annual" value="5.84" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Battery autonomy <span class="unit">(days)</span></label>
+          <input type="number" id="autonomy" value="1.5" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Battery depth of discharge (DOD)</label>
+          <select id="dodType">
+            <option value="0.5" selected>SLA (50%)</option>
+            <option value="0.8">LiFePO4 (80%)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Battery voltage <span class="unit">(V)</span></label>
+          <input type="number" id="batteryVoltage" value="12" min="1" step="1">
+        </div>
+      </div>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Minimum PV size <span class="info" title="Min PV (Wp) = Daily energy (kWh) × 1000 / peak sun hours">ℹ️</span></div>
+          <div class="value" id="out_minPV">—</div>
+          <div class="sub">Wp</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Recommended PV size <span class="info" title="Rounded up to nearest standard size from [10,20,30,50,75,100,150,200] Wp">ℹ️</span></div>
+          <div class="value" id="out_recPV">—</div>
+          <div class="sub" id="out_pvMargin">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Battery capacity <span class="info" title="Battery (Wh) = Daily energy (kWh) × 1000 × autonomy / DOD; Ah = Wh / voltage">ℹ️</span></div>
+          <div class="value" id="out_batteryAh">—</div>
+          <div class="sub" id="out_batteryWh">—</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap"><canvas id="chartM3"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MODULE 4 -->
+  <div class="panel" id="m4">
+    <div class="card">
+      <h2>Module 4 — Cost & Payback Calculator</h2>
+      <div class="toggle-row">
+        <input type="checkbox" id="usdToggle"> <label for="usdToggle">Show results in USD (1 USD = 3.67 AED)</label>
+      </div>
+
+      <h3>Component Costs <span class="unit">(AED)</span></h3>
+      <table>
+        <thead><tr><th>Component</th><th>Low</th><th>High</th><th>Midpoint</th></tr></thead>
+        <tbody id="costTableBody"></tbody>
+        <tfoot>
+          <tr style="font-weight:700;"><td>Total Capital Cost</td><td id="capLow">—</td><td id="capHigh">—</td><td id="capMid">—</td></tr>
+        </tfoot>
+      </table>
+
+      <h3>Operating & Tariff Inputs</h3>
+      <div class="grid">
+        <div class="field">
+          <label>Annual O&M cost — Low <span class="unit">(AED)</span></label>
+          <input type="number" id="omLow" value="280" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Annual O&M cost — High <span class="unit">(AED)</span></label>
+          <input type="number" id="omHigh" value="500" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Water tariff <span class="unit">(AED/m³)</span></label>
+          <input type="number" id="tariff" value="8.799" min="0" step="0.001">
+        </div>
+        <div class="field">
+          <label>Water surcharge <span class="unit">(AED/m³)</span></label>
+          <input type="number" id="surcharge" value="1.10" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Sewerage fee <span class="unit">(AED/m³)</span></label>
+          <input type="number" id="sewerage" value="3.30" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Desalination benchmark — Low <span class="unit">(AED/m³)</span></label>
+          <input type="number" id="desalLow" value="1.8" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Desalination benchmark — High <span class="unit">(AED/m³)</span></label>
+          <input type="number" id="desalHigh" value="5.5" min="0" step="0.1">
+        </div>
+      </div>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Total Capital Cost</div>
+          <div class="value" id="out_totalCap">—</div>
+          <div class="sub" id="out_totalCapRange">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Annual Water Bill Savings <span class="info" title="Savings = Water reused (m³/yr) × effective water cost">ℹ️</span></div>
+          <div class="value" id="out_annualSavings">—</div>
+          <div class="sub" id="out_waterReused">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Simple Payback <span class="info" title="Simple payback = Total capital cost / Annual savings">ℹ️</span></div>
+          <div class="value" id="out_simplePayback">—</div>
+          <div class="sub">years</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Net Payback <span class="info" title="Net payback = Total capital cost / (Annual savings − O&M)">ℹ️</span></div>
+          <div class="value" id="out_netPayback">—</div>
+          <div class="sub">years</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Avoided Desalination Cost <span class="info" title="= Water reused × desalination benchmark (low–high)">ℹ️</span></div>
+          <div class="value" id="out_avoidedDesal">—</div>
+          <div class="sub">AED/year</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap"><canvas id="chartM4"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MODULE 5 -->
+  <div class="panel" id="m5">
+    <div class="card">
+      <h2>Module 5 — Water Quality Compliance & Automated Control Simulator</h2>
+      <p style="font-size:0.85rem; color:var(--muted);">Reference: Abu Dhabi DOE Recycled Water and Biosolids Regulations. P1 = Unrestricted Reuse, P2 = Restricted Reuse.</p>
+
+      <div class="param-row" style="font-weight:700; border-bottom:2px solid var(--border);">
+        <div>Parameter (slider)</div><div>Value</div><div>P1</div><div>P2</div>
+      </div>
+      <div id="paramRows"></div>
+
+      <div id="statusBanner" class="status-banner">—</div>
+
+      <h3>Chlorine Dosing Sub-Simulator</h3>
+      <div class="grid">
+        <div class="field">
+          <label>Chlorine Dose Applied <span class="unit">(mg/L)</span></label>
+          <input type="range" id="clDose" min="0" max="15" step="0.1" value="10">
+          <input type="number" id="clDoseNum" min="0" max="15" step="0.1" value="10">
+        </div>
+        <div class="field">
+          <label>Chlorine Demand <span class="unit">(mg/L)</span></label>
+          <input type="range" id="clDemand" min="0" max="15" step="0.1" value="9.5">
+          <input type="number" id="clDemandNum" min="0" max="15" step="0.1" value="9.5">
+        </div>
+      </div>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Residual Chlorine <span class="info" title="Residual = Dose − Demand">ℹ️</span></div>
+          <div class="value" id="out_residual">—</div>
+          <div class="sub">mg/L</div>
+        </div>
+      </div>
+      <div id="dosingStatus" class="status-banner">—</div>
+    </div>
+  </div>
+
+  <!-- MODULE 6 -->
+  <div class="panel" id="m6">
+    <div class="card">
+      <h2>Module 6 — Process Flow Diagram</h2>
+      <div class="flow-diagram">
+        <div class="flow-box">Screening</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Sedimentation</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Sand / Zeolite Filter</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">GAC Filter</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Disinfection</div>
+        <div class="flow-arrow" id="m6arrowEnd">→</div>
+        <div class="flow-box highlight">Storage</div>
+      </div>
+      <div id="recircNote" class="recirc-note">—</div>
+      <p style="font-size:0.8rem; color:var(--muted); text-align:center;">A recirculation path (Disinfection → Screening) activates when the live water-quality status from Module 5 is "Out of Range," shown in red below; otherwise it is shown in yellow/grey as inactive.</p>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This tool projects expected performance and costs based on literature-reported values and stated engineering assumptions. It is a design aid, not a substitute for laboratory or field testing.
+  </div>
+
+</div>
+
+<script>
+/* ============ TAB SWITCHING ============ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============ HELPERS ============ */
+function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function fmt(n, d=2) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:d}); }
+function el(id) { return document.getElementById(id); }
+
+/* ============ MODULE 1 ============ */
+let chartM1, chartM2, chartM3, chartM4;
+
+function computeM1() {
+  const occupants = val('occupants');
+  const genRate = val('genRate');
+  const totalGW = occupants * genRate;
+
+  const streams = [
+    {chk: 'chkShower', pct: 'pctShower'},
+    {chk: 'chkAblution', pct: 'pctAblution'},
+    {chk: 'chkLaundry', pct: 'pctLaundry'},
+    {chk: 'chkWashbasin', pct: 'pctWashbasin'}
+  ];
+  let totalPct = 0, checkedPct = 0;
+  streams.forEach(s => {
+    const p = val(s.pct);
+    totalPct += p;
+    if (el(s.chk).checked) checkedPct += p;
+  });
+
+  const warn = el('splitWarning');
+  if (Math.abs(totalPct - 100) > 0.01) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠️ Stream split percentages sum to ${fmt(totalPct,1)}% — they must sum to 100%.`;
+  } else {
+    warn.style.display = 'none';
+  }
+
+  const Qin = totalGW * (checkedPct / 100);
+  const flushes = val('flushesPerDay');
+  const litersPerFlush = val('literPerFlush');
+  const occ = occupants;
+  const toiletDemand = occ * flushes * litersPerFlush;
+  const surplus = Qin - toiletDemand;
+  const surplusPct = toiletDemand !== 0 ? (surplus / toiletDemand * 100) : 0;
+
+  el('out_totalGW').textContent = fmt(totalGW);
+  el('out_Qin').textContent = fmt(Qin);
+  el('out_toiletDemand').textContent = fmt(toiletDemand);
+  el('out_surplus').textContent = fmt(surplus) + ' L/day';
+  el('out_surplusPct').textContent = (surplus >= 0 ? '+' : '') + fmt(surplusPct,1) + '%';
+
+  // Chart
+  if (chartM1) chartM1.destroy();
+  chartM1 = new Chart(document.getElementById('chartM1'), {
+    type: 'bar',
+    data: {
+      labels: ['Design Influent Flow (Q_in)', 'Toilet Flushing Demand'],
+      datasets: [{
+        label: 'L/day',
+        data: [Qin, toiletDemand],
+        backgroundColor: ['#1565c0', '#2e7d32']
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, title: { display: true, text: 'Q_in vs Toilet Demand (L/day)' } },
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+
+  return {Qin, toiletDemand, totalGW};
+}
+
+/* ============ MODULE 2 ============ */
+function computeM2(m1) {
+  const Qin_m3 = m1.Qin / 1000;
+  const demand_m3 = m1.toiletDemand / 1000;
+
+  const recircHead = val('recircHead');
+  const recircEff = val('recircEff') / 100;
+  const deliveryHead = val('deliveryHead');
+  const deliveryEff = val('deliveryEff') / 100;
+
+  const hydRecirc = (1000 * 9.81 * Qin_m3 * recircHead) / 3600000;
+  const elecRecirc = recircEff > 0 ? hydRecirc / recircEff : 0;
+
+  const hydDelivery = (1000 * 9.81 * demand_m3 * deliveryHead) / 3600000;
+  const elecDelivery = deliveryEff > 0 ? hydDelivery / deliveryEff : 0;
+
+  const ctrlPower = val('ctrlPower');
+  const ctrlEnergy = (ctrlPower * 24) / 1000; // kWh/day
+
+  const dosingPower = val('dosingPower');
+  const dosingRuntime = val('dosingRuntime');
+  const dosingEnergy = (dosingPower * dosingRuntime) / 1000;
+
+  const valveCount = val('valveCount');
+  const valvePower = val('valvePower');
+  const valveRuntime = val('valveRuntime');
+  const valvesEnergy = (valveCount * valvePower * valveRuntime) / 1000;
+
+  const components = [
+    {name: 'Controller + Sensors', kwh: ctrlEnergy},
+    {name: 'Recirculation Pump', kwh: elecRecirc},
+    {name: 'Delivery Pump', kwh: elecDelivery},
+    {name: 'Chlorine Dosing Pump', kwh: dosingEnergy},
+    {name: 'Solenoid Valves (total)', kwh: valvesEnergy}
+  ];
+
+  const subtotal = components.reduce((s,c) => s + c.kwh, 0);
+  const margin = val('designMargin') / 100;
+  const designValue = subtotal * (1 + margin);
+
+  // Table
+  const tbody = el('energyTableBody');
+  tbody.innerHTML = '';
+  components.forEach(c => {
+    const wh = c.kwh * 1000;
+    const pct = subtotal > 0 ? (c.kwh / subtotal * 100) : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.name}</td><td>${fmt(wh)}</td><td>${fmt(pct,1)}%</td>`;
+    tbody.appendChild(tr);
+  });
+  const trTotal = document.createElement('tr');
+  trTotal.style.fontWeight = '700';
+  trTotal.innerHTML = `<td>Subtotal</td><td>${fmt(subtotal*1000)}</td><td>100.0%</td>`;
+  tbody.appendChild(trTotal);
+
+  el('out_designEnergy').textContent = fmt(designValue, 2);
+
+  // Chart
+  if (chartM2) chartM2.destroy();
+  chartM2 = new Chart(document.getElementById('chartM2'), {
+    type: 'pie',
+    data: {
+      labels: components.map(c => c.name),
+      datasets: [{
+        data: components.map(c => c.kwh * 1000),
+        backgroundColor: ['#1565c0','#2e7d32','#66bb6a','#90a4ae','#f9a825']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: 'Daily Energy Breakdown (Wh)' } }
+    }
+  });
+
+  return {subtotal, designValue};
+}
+
+/* ============ MODULE 3 ============ */
+const PV_SIZES = [10, 20, 30, 50, 75, 100, 150, 200];
+
+function computeM3(m2) {
+  let dailyEnergy;
+  const overrideEl = el('dailyEnergyOverride');
+  if (overrideEl.dataset.manual === 'true' && overrideEl.value !== '') {
+    dailyEnergy = val('dailyEnergyOverride');
+  } else {
+    dailyEnergy = m2.designValue;
+    overrideEl.value = fmt(dailyEnergy, 2);
+  }
+
+  const psh = {
+    winter: val('psh_winter'),
+    summer: val('psh_summer'),
+    annual: val('psh_annual')
+  };
+  const basis = el('sizingBasis').value;
+  const selectedPSH = psh[basis];
+
+  const minPV = selectedPSH > 0 ? (dailyEnergy * 1000) / selectedPSH : 0;
+  let recPV = PV_SIZES.find(s => s >= minPV);
+  if (!recPV) recPV = PV_SIZES[PV_SIZES.length - 1];
+
+  const recOutput = (recPV * selectedPSH) / 1000; // kWh/day
+  const margin = dailyEnergy > 0 ? recOutput / dailyEnergy : 0;
+
+  const autonomy = val('autonomy');
+  const dod = parseFloat(el('dodType').value);
+  const voltage = val('batteryVoltage');
+
+  const batteryWh = dod > 0 ? (dailyEnergy * 1000 * autonomy) / dod : 0;
+  const batteryAh = voltage > 0 ? batteryWh / voltage : 0;
+
+  el('out_minPV').textContent = fmt(minPV, 1);
+  el('out_recPV').textContent = fmt(recPV, 0) + ' Wp';
+  el('out_pvMargin').textContent = '×' + fmt(margin, 2) + ' margin';
+  el('out_batteryAh').textContent = fmt(batteryAh, 1) + ' Ah';
+  el('out_batteryWh').textContent = fmt(batteryWh, 1) + ' Wh';
+
+  // Chart: seasonal output of recommended panel vs daily demand line
+  const seasons = ['Winter', 'Summer', 'Annual Average'];
+  const outputs = [
+    (recPV * psh.winter) / 1000,
+    (recPV * psh.summer) / 1000,
+    (recPV * psh.annual) / 1000
+  ];
+
+  if (chartM3) chartM3.destroy();
+  chartM3 = new Chart(document.getElementById('chartM3'), {
+    type: 'bar',
+    data: {
+      labels: seasons,
+      datasets: [
+        {
+          label: `Output of ${recPV} Wp panel (kWh/day)`,
+          data: outputs,
+          backgroundColor: '#1565c0'
+        },
+        {
+          label: 'Daily Energy Demand (kWh/day)',
+          data: [dailyEnergy, dailyEnergy, dailyEnergy],
+          type: 'line',
+          borderColor: '#c62828',
+          borderWidth: 2,
+          fill: false,
+          pointRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: 'Seasonal PV Output vs Daily Demand' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  return {dailyEnergy, recPV, batteryAh};
+}
+
+/* ============ MODULE 4 ============ */
+const COST_COMPONENTS = [
+  {name: 'Solar panel (50 Wp monocrystalline)', low: 150, high: 220},
+  {name: 'Charge controller (12V 10A)', low: 40, high: 60},
+  {name: 'Battery (12V 30Ah SLA)', low: 180, high: 250},
+  {name: 'ESP32 dev board', low: 30, high: 40},
+  {name: 'pH sensor + module', low: 90, high: 150},
+  {name: 'Turbidity sensor', low: 50, high: 90},
+  {name: 'Dissolved oxygen sensor', low: 150, high: 300},
+  {name: 'Residual chlorine sensor', low: 250, high: 500},
+  {name: 'Solenoid valves (×2)', low: 80, high: 150},
+  {name: 'Chlorine dosing pump', low: 100, high: 150},
+  {name: 'DC water pumps (×2)', low: 100, high: 180},
+  {name: 'Filter media (initial fill)', low: 150, high: 250},
+  {name: 'Tanks/containers (×4-5)', low: 300, high: 600},
+  {name: 'Piping/fittings/enclosure/misc', low: 150, high: 250}
+];
+
+function buildCostTable() {
+  const tbody = el('costTableBody');
+  tbody.innerHTML = '';
+  COST_COMPONENTS.forEach((c, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.name}</td>
+      <td><input type="number" class="costLow" data-idx="${i}" value="${c.low}" min="0" step="1"></td>
+      <td><input type="number" class="costHigh" data-idx="${i}" value="${c.high}" min="0" step="1"></td>
+      <td class="costMid" data-idx="${i}">—</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('input').forEach(inp => inp.addEventListener('input', computeAll));
+}
+
+function computeM4(m1) {
+  const usd = el('usdToggle').checked;
+  const rate = usd ? 1/3.67 : 1;
+  const currency = usd ? 'USD' : 'AED';
+
+  let lowSum = 0, highSum = 0;
+  document.querySelectorAll('#costTableBody tr').forEach((tr, i) => {
+    const low = parseFloat(tr.querySelector('.costLow').value) || 0;
+    const high = parseFloat(tr.querySelector('.costHigh').value) || 0;
+    const mid = (low + high) / 2;
+    tr.querySelector('.costMid').textContent = fmt(mid * rate, 1);
+    lowSum += low;
+    highSum += high;
+  });
+  const midSum = (lowSum + highSum) / 2;
+
+  el('capLow').textContent = fmt(lowSum * rate, 1);
+  el('capHigh').textContent = fmt(highSum * rate, 1);
+  el('capMid').textContent = fmt(midSum * rate, 1);
+
+  const tariff = val('tariff');
+  const surcharge = val('surcharge');
+  const sewerage = val('sewerage');
+  const effCost = tariff + surcharge + sewerage; // AED/m3
+
+  const waterReused = (m1.toiletDemand * 365) / 1000; // m3/year
+  const annualSavingsAED = waterReused * effCost;
+
+  const simplePayback = annualSavingsAED > 0 ? midSum / annualSavingsAED : NaN;
+
+  const omLow = val('omLow');
+  const omHigh = val('omHigh');
+  const omMid = (omLow + omHigh) / 2;
+  const netBenefit = annualSavingsAED - omMid;
+  const netPayback = netBenefit > 0 ? midSum / netBenefit : null;
+
+  const desalLow = val('desalLow');
+  const desalHigh = val('desalHigh');
+  const avoidedLow = waterReused * desalLow;
+  const avoidedHigh = waterReused * desalHigh;
+
+  el('out_totalCap').textContent = fmt(midSum * rate, 0) + ' ' + currency;
+  el('out_totalCapRange').textContent = `${fmt(lowSum*rate,0)} – ${fmt(highSum*rate,0)} ${currency}`;
+  el('out_annualSavings').textContent = fmt(annualSavingsAED * rate, 0) + ' ' + currency;
+  el('out_waterReused').textContent = fmt(waterReused, 1) + ' m³/yr reused';
+  el('out_simplePayback').textContent = isFinite(simplePayback) ? fmt(simplePayback, 1) : 'N/A';
+  el('out_netPayback').textContent = netPayback ? fmt(netPayback, 1) : 'N/A — never pays back';
+  el('out_avoidedDesal').textContent = `${fmt(avoidedLow*rate,0)} – ${fmt(avoidedHigh*rate,0)} ${currency}`;
+
+  // 15-year cumulative chart
+  const years = Array.from({length: 16}, (_, i) => i); // 0..15
+  const cumSavings = years.map(y => annualSavingsAED * y * rate);
+  const cumNet = years.map(y => netBenefit > 0 ? netBenefit * y * rate : 0);
+  const capLine = years.map(() => midSum * rate);
+
+  if (chartM4) chartM4.destroy();
+  chartM4 = new Chart(document.getElementById('chartM4'), {
+    type: 'line',
+    data: {
+      labels: years.map(y => 'Yr ' + y),
+      datasets: [
+        {label: 'Cumulative Savings (Simple)', data: cumSavings, borderColor: '#1565c0', fill: false, pointRadius: 0},
+        {label: 'Cumulative Net Benefit', data: cumNet, borderColor: '#2e7d32', fill: false, pointRadius: 0},
+        {label: 'Total Capital Cost', data: capLine, borderColor: '#c62828', borderDash: [6,4], fill: false, pointRadius: 0}
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: `15-Year Cumulative Savings vs Cost (${currency})` } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  return {midSum, annualSavingsAED, simplePayback, netPayback, waterReused};
+}
+
+/* ============ MODULE 5 ============ */
+const QUALITY_PARAMS = [
+  {key: 'pH', name: 'pH', unit: '', min: 0, max: 14, step: 0.1, def: 7.2,
+    p1: v => v >= 6 && v <= 8.5, p2: v => v >= 6 && v <= 8.5, label1: '6 – 8.5', label2: '6 – 8.5'},
+  {key: 'bod', name: 'BOD5', unit: 'mg/L', min: 0, max: 30, step: 0.5, def: 5,
+    p1: v => v <= 10, p2: v => v <= 10, label1: '≤ 10', label2: '≤ 10'},
+  {key: 'tss', name: 'TSS', unit: 'mg/L', min: 0, max: 40, step: 0.5, def: 6,
+    p1: v => v <= 10, p2: v => v <= 20, label1: '≤ 10', label2: '≤ 20'},
+  {key: 'turbidity', name: 'Turbidity', unit: 'NTU', min: 0, max: 20, step: 0.1, def: 3,
+    p1: v => v <= 5, p2: v => v <= 10, label1: '≤ 5', label2: '≤ 10'},
+  {key: 'chlorine', name: 'Residual Chlorine', unit: 'mg/L', min: 0, max: 2, step: 0.05, def: 0.6,
+    p1: v => v >= 0.5 && v <= 1, p2: v => v >= 0.5 && v <= 1, label1: '0.5 – 1', label2: '0.5 – 1'},
+  {key: 'do', name: 'Dissolved Oxygen', unit: 'mg/L', min: 0, max: 10, step: 0.1, def: 2,
+    p1: v => v >= 1, p2: v => v >= 1, label1: '≥ 1', label2: '≥ 1'},
+  {key: 'fecal', name: 'Faecal Coliform / E.coli', unit: 'CFU/100mL', min: 0, max: 1000, step: 1, def: 15,
+    p1: v => v <= 23, p2: v => v <= 800, label1: '≤ 23', label2: '≤ 800'},
+  {key: 'enterococci', name: 'Intestinal Enterococci', unit: 'CFU/100mL', min: 0, max: 200, step: 1, def: 8,
+    p1: v => v <= 24, p2: v => v <= 104, label1: '≤ 24', label2: '≤ 104'},
+  {key: 'helminth', name: 'Helminth Ova', unit: 'No./L', min: 0, max: 5, step: 1, def: 0,
+    p1: v => v <= 0, p2: v => v <= 0, label1: '0', label2: '0'}
+];
+
+function buildM5Rows() {
+  const container = el('paramRows');
+  container.innerHTML = '';
+  QUALITY_PARAMS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'param-row';
+    row.innerHTML = `
+      <div class="pname">${p.name} <span class="unit">${p.unit ? '('+p.unit+')' : ''}</span></div>
+      <div>
+        <input type="range" id="slider_${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" style="width:80px;">
+        <span id="val_${p.key}" style="font-weight:600;"></span>
+      </div>
+      <div id="p1_${p.key}"></div>
+      <div id="p2_${p.key}"></div>
+    `;
+    container.appendChild(row);
+    el(`slider_${p.key}`).addEventListener('input', computeAll);
+  });
+}
+
+function computeM5() {
+  let allP1 = true, allP2 = true;
+  QUALITY_PARAMS.forEach(p => {
+    const v = val(`slider_${p.key}`);
+    el(`val_${p.key}`).textContent = `${v} (${p.label1 === p.label2 ? p.label1 : 'P1: '+p.label1+', P2: '+p.label2})`;
+    const pass1 = p.p1(v);
+    const pass2 = p.p2(v);
+    if (!pass1) allP1 = false;
+    if (!pass2) allP2 = false;
+    el(`p1_${p.key}`).innerHTML = `<span class="badge ${pass1 ? 'badge-pass' : 'badge-fail'}">${pass1 ? '✅' : '❌'} P1</span>`;
+    el(`p2_${p.key}`).innerHTML = `<span class="badge ${pass2 ? 'badge-pass' : 'badge-fail'}">${pass2 ? '✅' : '❌'} P2</span>`;
+  });
+
+  const banner = el('statusBanner');
+  let statusClass, statusText, outOfRange;
+  if (allP1) {
+    statusClass = 'status-green';
+    statusText = '✅ MEETS UNRESTRICTED REUSE (P1) — SEND TO STORAGE';
+    outOfRange = false;
+  } else if (allP2) {
+    statusClass = 'status-yellow';
+    statusText = '🟡 MEETS RESTRICTED REUSE (P2) ONLY';
+    outOfRange = false;
+  } else {
+    statusClass = 'status-red';
+    statusText = '🔴 OUT OF RANGE — RECIRCULATE TO SCREENING TANK';
+    outOfRange = true;
+  }
+  banner.className = 'status-banner ' + statusClass;
+  banner.textContent = statusText;
+
+  // Chlorine dosing sub-sim
+  const dose = val('clDose');
+  const demand = val('clDemand');
+  const residual = dose - demand;
+  el('out_residual').textContent = fmt(residual, 2);
+
+  const dosingBanner = el('dosingStatus');
+  let dStatusClass, dStatusText;
+  if (residual < 0.5) {
+    dStatusClass = 'status-red';
+    dStatusText = '🔴 DOSING PUMP: ON (below target)';
+  } else if (residual <= 1) {
+    dStatusClass = 'status-green';
+    dStatusText = '✅ DOSING PUMP: OFF (within Abu Dhabi DOE target range 0.5–1 mg/L)';
+  } else {
+    dStatusClass = 'status-yellow';
+    dStatusText = '🟡 DOSING PUMP: OFF (above target — review dose)';
+  }
+  dosingBanner.className = 'status-banner ' + dStatusClass;
+  dosingBanner.textContent = dStatusText;
+
+  return {outOfRange, allP1, allP2};
+}
+
+/* Chlorine slider/number sync */
+function syncPair(rangeId, numId) {
+  el(rangeId).addEventListener('input', () => { el(numId).value = el(rangeId).value; computeAll(); });
+  el(numId).addEventListener('input', () => { el(rangeId).value = el(numId).value; computeAll(); });
+}
+
+/* ============ MODULE 6 ============ */
+function computeM6(m5) {
+  const arrowEnd = el('m6arrowEnd');
+  const note = el('recircNote');
+  if (m5.outOfRange) {
+    arrowEnd.style.color = '#c62828';
+    note.style.background = 'var(--danger-bg)';
+    note.style.color = 'var(--danger)';
+    note.textContent = '🔴 Recirculation ACTIVE: Disinfection → Screening Tank (water quality out of range)';
+  } else {
+    arrowEnd.style.color = '#2e7d32';
+    note.style.background = 'var(--ok-bg)';
+    note.style.color = 'var(--ok)';
+    note.textContent = '✅ Recirculation INACTIVE — water passes to Storage (quality within target)';
+  }
+}
+
+/* ============ MASTER COMPUTE ============ */
+let lastResults = {};
+function computeAll() {
+  const m1 = computeM1();
+  const m2 = computeM2(m1);
+  const m3 = computeM3(m2);
+  const m4 = computeM4(m1);
+  const m5 = computeM5();
+  computeM6(m5);
+  lastResults = {m1, m2, m3, m4, m5};
+}
+
+/* Track manual override on Module 3 daily energy field */
+el('dailyEnergyOverride').addEventListener('input', () => {
+  el('dailyEnergyOverride').dataset.manual = 'true';
+  computeAll();
+});
+
+/* ============ EVENT LISTENERS ============ */
+const allInputIds = [
+  'occupants','genRate','flushesPerDay','literPerFlush',
+  'chkShower','chkAblution','chkLaundry','chkWashbasin',
+  'pctShower','pctAblution','pctLaundry','pctWashbasin',
+  'ctrlPower','recircHead','recircEff','deliveryHead','deliveryEff',
+  'dosingPower','dosingRuntime','valveCount','valvePower','valveRuntime','designMargin',
+  'sizingBasis','psh_winter','psh_summer','psh_annual','autonomy','dodType','batteryVoltage',
+  'omLow','omHigh','tariff','surcharge','sewerage','desalLow','desalHigh','usdToggle'
+];
+allInputIds.forEach(id => {
+  const e = el(id);
+  e.addEventListener('input', computeAll);
+  e.addEventListener('change', computeAll);
+});
+
+syncPair('clDose','clDoseNum');
+syncPair('clDemand','clDemandNum');
+
+/* Info tooltip click-to-toggle for touch devices (title already shows on hover) */
+
+/* ============ RESET ============ */
+const DEFAULTS = {
+  occupants: 5, genRate: 192, flushesPerDay: 5, literPerFlush: 5,
+  pctShower: 49, pctAblution: 18, pctLaundry: 10, pctWashbasin: 23,
+  chkShower: true, chkAblution: false, chkLaundry: false, chkWashbasin: true,
+  ctrlPower: 2.5, recircHead: 1.5, recircEff: 35, deliveryHead: 3, deliveryEff: 35,
+  dosingPower: 4, dosingRuntime: 0.3, valveCount: 2, valvePower: 5, valveRuntime: 0.3, designMargin: 25,
+  sizingBasis: 'winter', psh_winter: 4.78, psh_summer: 7.42, psh_annual: 5.84,
+  autonomy: 1.5, dodType: '0.5', batteryVoltage: 12,
+  omLow: 280, omHigh: 500, tariff: 8.799, surcharge: 1.10, sewerage: 3.30,
+  desalLow: 1.8, desalHigh: 5.5, usdToggle: false,
+  clDose: 10, clDemand: 9.5
+};
+
+function resetAll() {
+  Object.keys(DEFAULTS).forEach(id => {
+    const e = el(id);
+    if (!e) return;
+    if (e.type === 'checkbox') e.checked = DEFAULTS[id];
+    else e.value = DEFAULTS[id];
+  });
+  el('clDoseNum').value = DEFAULTS.clDose;
+  el('clDemandNum').value = DEFAULTS.clDemand;
+  el('dailyEnergyOverride').dataset.manual = 'false';
+  el('dailyEnergyOverride').value = '';
+
+  buildCostTable();
+  QUALITY_PARAMS.forEach(p => { el(`slider_${p.key}`).value = p.def; });
+
+  computeAll();
+}
+el('resetBtn').addEventListener('click', resetAll);
+
+/* ============ PRINT ============ */
+el('printBtn').addEventListener('click', () => window.print());
+
+/* ============ CSV EXPORT ============ */
+el('csvBtn').addEventListener('click', () => {
+  const r = lastResults;
+  const rows = [
+    ['Metric','Value','Unit'],
+    ['Design Influent Flow (Q_in)', fmt(r.m1.Qin), 'L/day'],
+    ['Toilet Flushing Demand', fmt(r.m1.toiletDemand), 'L/day'],
+    ['Subtotal Energy Demand', fmt(r.m2.subtotal,3), 'kWh/day'],
+    ['Design Daily Energy Demand', fmt(r.m2.designValue,3), 'kWh/day'],
+    ['Recommended PV Size', fmt(r.m3.recPV,0), 'Wp'],
+    ['Battery Capacity', fmt(r.m3.batteryAh,1), 'Ah'],
+    ['Total Capital Cost (midpoint)', fmt(r.m4.midSum,0), 'AED'],
+    ['Annual Water Bill Savings', fmt(r.m4.annualSavingsAED,0), 'AED/year'],
+    ['Simple Payback', isFinite(r.m4.simplePayback) ? fmt(r.m4.simplePayback,1) : 'N/A', 'years'],
+    ['Net Payback', r.m4.netPayback ? fmt(r.m4.netPayback,1) : 'N/A — never pays back', 'years'],
+    ['Water Reused', fmt(r.m4.waterReused,1), 'm3/year'],
+    ['Water Quality Status', r.m5.allP1 ? 'P1 - Unrestricted Reuse' : (r.m5.allP2 ? 'P2 - Restricted Reuse' : 'Out of Range - Recirculate'), '']
+  ];
+  const csv = rows.map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'greywater_design_summary.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ============ INIT ============ */
+buildCostTable();
+buildM5Rows();
+computeAll();
+</script>
+
+</body>
+</html>
